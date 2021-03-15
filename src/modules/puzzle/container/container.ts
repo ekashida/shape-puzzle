@@ -37,16 +37,9 @@ class PuzzleTally {
         this.pieces = pieces;
     }
 
-    private getTally(
-        columnOrRow: 'column' | 'row',
-        columnOrRowNumber: number,
-        shape: Shape
-    ) {
+    private getTally(columnOrRow: 'column' | 'row', columnOrRowNumber: number, shape: Shape) {
         const filtered = this.pieces.filter(({ coordinates, value }) => {
-            return (
-                columnOrRowNumber === coordinates[columnOrRow] &&
-                shape === value
-            );
+            return columnOrRowNumber === coordinates[columnOrRow] && shape === value;
         });
         return filtered.length;
     }
@@ -94,9 +87,7 @@ export default class Container extends LightningElement {
 
     @api
     checkValidity() {
-        return !this.pieces.some(
-            ({ value, selectedValue }) => value !== selectedValue
-        );
+        return !this.pieces.some(({ value, selectedValue }) => value !== selectedValue);
     }
 
     hints: Array<PuzzleHint> = [];
@@ -234,10 +225,7 @@ export default class Container extends LightningElement {
     }
 
     generateHints() {
-        this.hints = [
-            ...this.generateColumnHints(),
-            ...this.generateRowHints(),
-        ];
+        this.hints = [...this.generateColumnHints(), ...this.generateRowHints()];
     }
 
     generatePieces() {
