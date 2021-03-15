@@ -90,6 +90,22 @@ export default class Container extends LightningElement {
         return !this.pieces.some(({ value, selectedValue }) => value !== selectedValue);
     }
 
+    @api
+    clear() {
+        this.pieces
+            .filter(({ revealed }) => !revealed)
+            .forEach((piece) => {
+                piece.selectedValue = '';
+            });
+        this.pieces = [...this.pieces];
+    }
+
+    @api
+    new() {
+        this.generatePieces();
+        this.generateHints();
+    }
+
     get gridContainerStyle() {
         const numOptions = SHAPES.length;
         const totalColumns = this.columns + numOptions;
@@ -135,6 +151,14 @@ export default class Container extends LightningElement {
 
         // Force a render by updating the array reference.
         this.pieces = [...this.pieces];
+    }
+
+    handleNewClick() {
+        this.new();
+    }
+
+    handleClearClick() {
+        this.clear();
     }
 
     hints: Array<PuzzleHint> = [];
