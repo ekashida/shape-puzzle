@@ -1,0 +1,18 @@
+.grid-container {
+    display: grid;
+}
+
+.grid-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.grid-item .count {
+    position: absolute;
+}
+
+puzzle-piece,
+.puzzle-piece-container {
+    outline: 1px solid #ddd;
+}

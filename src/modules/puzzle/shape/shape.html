@@ -1,0 +1,23 @@
+<template>
+    <template if:true={isCircle}>
+        <svg viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="38" fill={fill} />
+        </svg>
+    </template>
+    <template if:true={isSquare}>
+        <svg viewBox="0 0 100 100">
+            <rect x="15" y="15" width="70" height="70" rx="15" fill={fill} />
+        </svg>
+    </template>
+    <template if:true={isTriangle}>
+        <svg viewBox="0 0 100 100">
+            <polygon
+                points="50,20 80,75 20,75"
+                stroke={fill}
+                stroke-width="20"
+                stroke-linejoin="round"
+                fill={fill}
+            ></polygon>
+        </svg>
+    </template>
+</template>

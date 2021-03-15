@@ -1,0 +1,26 @@
+<template>
+    <div class="grid-container" style={gridContainerStyle}>
+        <template for:each={pieces} for:item="piece">
+            <puzzle-piece
+                class="grid-item"
+                disabled={piece.revealed}
+                fill={piece.fill}
+                key={piece.key}
+                onclick={handleClick}
+                style={piece.style}
+                uid={piece.key}
+                value={piece.selectedValue}
+            ></puzzle-piece>
+        </template>
+        <template for:each={hints} for:item="hint">
+            <div class="grid-item" key={hint.key} style={hint.style}>
+                <puzzle-shape
+                    value={hint.shape}
+                    fill="#ccc"
+                    style={puzzleShapeStyle}
+                ></puzzle-shape>
+                <span class="count">{hint.content}</span>
+            </div>
+        </template>
+    </div>
+</template>
