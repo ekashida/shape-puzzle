@@ -1,8 +1,7 @@
 import { LightningElement, api } from 'lwc';
 
-const REVEAL_PROBABILITY = 0.5;
-
 type Shape = 'circle' | 'square' | 'triangle';
+type SelectableValues = '' | Shape;
 
 interface Coordinates {
     column: number;
@@ -23,12 +22,13 @@ interface PuzzlePiece {
     readonly fill: string;
     readonly revealed: boolean;
     readonly style: string;
-    selectedValue: Shape | '';
+    selectedValue: SelectableValues;
     value: Shape;
 }
 
-type PuzzlePieceMap = Map<string, PuzzlePiece>;
-type PuzzleHintMap = Map<string, PuzzleHint>;
+const REVEAL_PROBABILITY = 0.5;
+const SHAPES: Array<Shape> = ['circle', 'square', 'triangle'];
+const SELECTABLE_VALUES: Array<SelectableValues> = ['', ...SHAPES];
 
 class PuzzleTally {
     pieces: Array<PuzzlePiece>;
@@ -90,19 +90,8 @@ export default class Container extends LightningElement {
         return !this.pieces.some(({ value, selectedValue }) => value !== selectedValue);
     }
 
-    hints: Array<PuzzleHint> = [];
-
-    pieces: Array<PuzzlePiece> = [];
-
-    private static SHAPES: Array<Shape> = ['circle', 'square', 'triangle'];
-
-    private static getRandomShape() {
-        const index = Math.floor(Math.random() * Container.SHAPES.length);
-        return Container.SHAPES[index];
-    }
-
     get gridContainerStyle() {
-        const numOptions = Container.SHAPES.length;
+        const numOptions = SHAPES.length;
         const totalColumns = this.columns + numOptions;
         const totalRows = this.rows + numOptions;
         return `
@@ -140,30 +129,30 @@ export default class Container extends LightningElement {
         if (revealed) {
             return;
         }
-        // Initial click selects first shape and subsequent clicks rotate through shapes.
-        if (selectedValue === '') {
-            piece.selectedValue = Container.SHAPES[0];
-        } else {
-            const index = Container.SHAPES.indexOf(selectedValue);
-            const nextIndex = (index + 1) % Container.SHAPES.length;
-            piece.selectedValue = Container.SHAPES[nextIndex];
-        }
+        const index = SELECTABLE_VALUES.indexOf(selectedValue);
+        const nextIndex = (index + 1) % SELECTABLE_VALUES.length;
+        piece.selectedValue = SELECTABLE_VALUES[nextIndex];
+
         // Force a render by updating the array reference.
         this.pieces = [...this.pieces];
     }
+
+    hints: Array<PuzzleHint> = [];
+
+    pieces: Array<PuzzlePiece> = [];
 
     _generatePieces() {
         const count = this.columns * this.rows;
         let pieces: Array<PuzzlePiece> = [];
         for (let index = 0; index < count; index += 1) {
             const coordinates = {
-                column: (index % this.columns) + Container.SHAPES.length,
-                row: Math.floor(index / this.columns) + Container.SHAPES.length,
+                column: (index % this.columns) + SHAPES.length,
+                row: Math.floor(index / this.columns) + SHAPES.length,
             };
             const key = stringifyCoordinates(coordinates);
             const style = this.computeGridItemStyle(coordinates);
             const revealed = REVEAL_PROBABILITY < Math.random();
-            const value = Container.getRandomShape();
+            const value = SHAPES[Math.floor(Math.random() * SHAPES.length)];
             const selectedValue = revealed ? value : '';
             const fill = revealed ? '#333' : 'rgb(0 112 210)';
             const piece: PuzzlePiece = {
@@ -184,7 +173,7 @@ export default class Container extends LightningElement {
         const tally = new PuzzleTally(this.pieces);
 
         let hints: Array<PuzzleHint> = [];
-        Container.SHAPES.forEach((shape, index) => {
+        SHAPES.forEach((shape, index) => {
             for (let coord = start; coord < total; coord += 1) {
                 let coordinates: Coordinates;
                 let content = 0;
@@ -211,15 +200,15 @@ export default class Container extends LightningElement {
     }
 
     generateRowHints() {
-        const total = this.rows + Container.SHAPES.length;
-        const start = Container.SHAPES.length;
+        const total = this.rows + SHAPES.length;
+        const start = SHAPES.length;
         const isRow = true;
         return this._generateHints(total, start, isRow);
     }
 
     generateColumnHints() {
-        const total = this.columns + Container.SHAPES.length;
-        const start = Container.SHAPES.length;
+        const total = this.columns + SHAPES.length;
+        const start = SHAPES.length;
         const isRow = false;
         return this._generateHints(total, start, isRow);
     }
