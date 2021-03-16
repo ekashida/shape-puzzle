@@ -2,7 +2,7 @@ import { LightningElement } from 'lwc';
 
 export default class App extends LightningElement {
     renderFireworks() {
-        const duration = 10 * 1000;
+        const duration = 1 * 1000;
         const animationEnd = Date.now() + duration;
         const defaults = {
             startVelocity: 30,
