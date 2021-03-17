@@ -16,13 +16,13 @@
             <div class="grid-item" key={hint.key} style={hint.style}>
                 <puzzle-shape
                     value={hint.shape}
-                    fill="#ccc"
+                    fill={hint.fill}
                     style={puzzleShapeStyle}
                 ></puzzle-shape>
                 <span class="count">{hint.content}</span>
             </div>
         </template>
         <button style={puzzleShapeStyle} onclick={handleNewClick}>New</button>
-        <button style={puzzleShapeStyle} onclick={handleClearClick}>Clear</button>
+        <button style={puzzleShapeStyle} onclick={handleResetClick}>Reset</button>
     </div>
 </template>

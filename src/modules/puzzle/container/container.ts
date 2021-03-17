@@ -11,9 +11,10 @@ interface Coordinates {
 interface PuzzleHint {
     readonly key: string;
     readonly coordinates: Coordinates;
-    readonly content: unknown;
+    readonly content: number;
+    readonly shape: Shape;
     readonly style: string;
-    shape: Shape;
+    fill: string;
 }
 
 interface PuzzlePiece {
@@ -22,9 +23,17 @@ interface PuzzlePiece {
     readonly fill: string;
     readonly revealed: boolean;
     readonly style: string;
+    readonly value: Shape;
     selectedValue: SelectableValues;
-    value: Shape;
 }
+
+// https://coolors.co/4d9de0-e15554-e1bc29-3bb273
+const FILL_COLORS = {
+    REVEALED_FILL: '#333333',
+    SELECTED_FILL: '#4D9DE0',
+    COMPLETE_HINT: '#3BB273',
+    INCOMPLETE_HINT: '#CCCCCC',
+};
 
 const REVEAL_PROBABILITY = 0.5;
 const SHAPES: Array<Shape> = ['circle', 'square', 'triangle'];
@@ -37,19 +46,34 @@ class PuzzleTally {
         this.pieces = pieces;
     }
 
-    private getTally(columnOrRow: 'column' | 'row', columnOrRowNumber: number, shape: Shape) {
+    private getValueCount(columnOrRow: 'column' | 'row', columnOrRowNumber: number, shape: Shape) {
         const filtered = this.pieces.filter(({ coordinates, value }) => {
             return columnOrRowNumber === coordinates[columnOrRow] && shape === value;
         });
         return filtered.length;
     }
 
-    getColumnTally(columnNumber: number, shape: Shape) {
-        return this.getTally('column', columnNumber, shape);
+    private getSelectedCount(columnOrRow: 'column' | 'row', columnOrRowNumber: number, shape: Shape) {
+        const filtered = this.pieces.filter(({ coordinates, selectedValue }) => {
+            return columnOrRowNumber === coordinates[columnOrRow] && shape === selectedValue;
+        });
+        return filtered.length;
+    }
+
+    getColumnValueCount(columnNumber: number, shape: Shape) {
+        return this.getValueCount('column', columnNumber, shape);
+    }
+
+    getColumnSelectedCount(columnNumber: number, shape: Shape) {
+        return this.getSelectedCount('column', columnNumber, shape);
     }
 
     getRowTally(rowNumber: number, shape: Shape) {
-        return this.getTally('row', rowNumber, shape);
+        return this.getValueCount('row', rowNumber, shape);
+    }
+
+    getValidRowTally(rowNumber: number, shape: Shape) {
+        return this.getSelectedCount('row', rowNumber, shape);
     }
 }
 
@@ -58,6 +82,9 @@ function stringifyCoordinates({ column, row }: Coordinates) {
 }
 
 export default class Container extends LightningElement {
+    @api
+    enableAssist: boolean;
+
     @api
     get columns() {
         return this._columns;
@@ -91,13 +118,16 @@ export default class Container extends LightningElement {
     }
 
     @api
-    clear() {
+    reset() {
         this.pieces
             .filter(({ revealed }) => !revealed)
             .forEach((piece) => {
                 piece.selectedValue = '';
             });
         this.pieces = [...this.pieces];
+        if (this.enableAssist) {
+            this.generateHints();
+        }
     }
 
     @api
@@ -141,24 +171,25 @@ export default class Container extends LightningElement {
 
     handleClick(event) {
         const piece = this.pieces.find(({ key }) => key === event.target.uid);
-        const { revealed, selectedValue } = piece;
-        if (revealed) {
-            return;
-        }
+        const { selectedValue } = piece;
         const index = SELECTABLE_VALUES.indexOf(selectedValue);
         const nextIndex = (index + 1) % SELECTABLE_VALUES.length;
         piece.selectedValue = SELECTABLE_VALUES[nextIndex];
 
         // Force a render by updating the array reference.
         this.pieces = [...this.pieces];
+
+        if (this.enableAssist) {
+            this.generateHints();
+        }
     }
 
     handleNewClick() {
         this.new();
     }
 
-    handleClearClick() {
-        this.clear();
+    handleResetClick() {
+        this.reset();
     }
 
     hints: Array<PuzzleHint> = [];
@@ -166,6 +197,7 @@ export default class Container extends LightningElement {
     pieces: Array<PuzzlePiece> = [];
 
     _generatePieces() {
+        const { REVEALED_FILL, SELECTED_FILL } = FILL_COLORS;
         const count = this.columns * this.rows;
         let pieces: Array<PuzzlePiece> = [];
         for (let index = 0; index < count; index += 1) {
@@ -178,7 +210,7 @@ export default class Container extends LightningElement {
             const revealed = REVEAL_PROBABILITY < Math.random();
             const value = SHAPES[Math.floor(Math.random() * SHAPES.length)];
             const selectedValue = revealed ? value : '';
-            const fill = revealed ? '#333' : 'rgb(0 112 210)';
+            const fill = revealed ? REVEALED_FILL : SELECTED_FILL;
             const piece: PuzzlePiece = {
                 coordinates,
                 fill,
@@ -194,25 +226,31 @@ export default class Container extends LightningElement {
     }
 
     _generateHints(total: number, start: number, isRow: boolean) {
-        const tally = new PuzzleTally(this.pieces);
+        const { COMPLETE_HINT, INCOMPLETE_HINT } = FILL_COLORS;
+        const puzzleTally = new PuzzleTally(this.pieces);
 
         let hints: Array<PuzzleHint> = [];
         SHAPES.forEach((shape, index) => {
             for (let coord = start; coord < total; coord += 1) {
                 let coordinates: Coordinates;
-                let content = 0;
+                let valueCount: number;
+                let selectedCount: number;
                 if (isRow) {
+                    valueCount = puzzleTally.getRowTally(coord, shape);
+                    selectedCount = puzzleTally.getValidRowTally(coord, shape);
                     coordinates = { column: index, row: coord };
-                    content = tally.getRowTally(coord, shape);
                 } else {
+                    valueCount = puzzleTally.getColumnValueCount(coord, shape);
+                    selectedCount = puzzleTally.getColumnSelectedCount(coord, shape);
                     coordinates = { column: coord, row: index };
-                    content = tally.getColumnTally(coord, shape);
                 }
+                const fill = valueCount === selectedCount && this.enableAssist ? COMPLETE_HINT : INCOMPLETE_HINT;
                 const key = stringifyCoordinates(coordinates);
                 const style = this.computeGridItemStyle(coordinates);
                 const hint: PuzzleHint = {
-                    content,
+                    content: valueCount,
                     coordinates,
+                    fill,
                     key,
                     shape,
                     style,
