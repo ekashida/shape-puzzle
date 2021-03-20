@@ -171,7 +171,10 @@ export default class Container extends LightningElement {
 
     handleClick(event) {
         const piece = this.pieces.find(({ key }) => key === event.target.uid);
-        const { selectedValue } = piece;
+        const { revealed, selectedValue } = piece;
+        if (revealed) {
+            return;
+        }
         const index = SELECTABLE_VALUES.indexOf(selectedValue);
         const nextIndex = (index + 1) % SELECTABLE_VALUES.length;
         piece.selectedValue = SELECTABLE_VALUES[nextIndex];
