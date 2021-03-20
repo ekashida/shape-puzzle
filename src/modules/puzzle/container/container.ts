@@ -83,7 +83,7 @@ function stringifyCoordinates({ column, row }: Coordinates) {
 
 export default class Container extends LightningElement {
     @api
-    enableAssist: boolean;
+    enableAssist = false;
 
     @api
     get columns() {
@@ -190,6 +190,11 @@ export default class Container extends LightningElement {
 
     handleResetClick() {
         this.reset();
+    }
+
+    handleAssistClick() {
+        this.enableAssist = !this.enableAssist;
+        this.generateHints();
     }
 
     hints: Array<PuzzleHint> = [];
